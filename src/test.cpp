@@ -1,5 +1,5 @@
-#include "test.h"
-#include "common/logger.h"
+#include "test_lib/test.h"
+#include "logger.h"
 #include <cassert>
 #include <algorithm>
 
@@ -35,6 +35,7 @@ namespace test {
 			getCurrentError()->add("EXCEPTION: " + std::string(exc.what()));
 			result = false;
 		}
+		is_run = true;
 		return result;
 	}
 
