@@ -7,6 +7,6 @@ add_library(test_lib src/test.cpp)
 target_include_directories(test_lib PUBLIC include)
 
 add_subdirectory(logger)
-target_link_libraries(test_lib logger)
+target_link_libraries(test_lib PRIVATE logger)
 
 add_subdirectory(tests)
