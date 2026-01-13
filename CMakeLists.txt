@@ -15,4 +15,4 @@ else()
     target_include_directories(test_lib PRIVATE ${LOGGER_INCLUDE_DIRS})
 endif()
 
-add_subdirectory(tests)
+add_subdirectory(test_lib_tests)
