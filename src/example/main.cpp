@@ -1,4 +1,4 @@
-#include "common/logger.h"
+#include "logger/logger.h"
 #include "example/test_module_1.h"
 #include "example/test_module_2.h"
 #include "example/test_module_3.h"
