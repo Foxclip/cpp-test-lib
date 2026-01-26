@@ -294,9 +294,6 @@ namespace test {
 		}
 		afterRunModule();
 		OnAfterRun();
-		if (print_summary_enabled) {
-			printSummary();
-		}
 		is_run = true;
 		result = cancelled_list.empty() && failed_list.empty();
 		return result;

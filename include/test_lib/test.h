@@ -115,7 +115,6 @@ namespace test {
 		std::vector<std::string> failed_list;
 		std::vector<std::string> empty_module_list;
 		size_t max_test_name = 0;
-		bool print_summary_enabled = false;
 		std::function<void(void)> OnBeforeRun = []() { };
 		std::function<void(void)> OnAfterRun = []() { };
 		std::function<void(void)> OnBeforeRunTest = []() { };

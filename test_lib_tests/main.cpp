@@ -29,8 +29,8 @@ void add_test() {
 void run_test() {
     TestModule* test_module = new TestModule("TestModule", nullptr);
     test::Test* test = test_module->addTest("Test", [](test::Test& test) { });
-    test_module->print_summary_enabled = true;
     test_module->run();
+    test_module->printSummary();
     assert(test->is_run);
     assert(test->result);
 }
@@ -40,8 +40,8 @@ void failing_test() {
     test::Test* test = test_module->addTest("FailingTest", [&](test::Test& test) {
         test_module->failingTest(test);
     });
-    test_module->print_summary_enabled = true;
     test_module->run();
+    test_module->printSummary();
     assert(test->is_run);
     assert(!test->result);
 }
@@ -50,8 +50,8 @@ void test_dependency_execution() {
     TestModule* test_module = new TestModule("DependencyTestModule", nullptr);
     test::Test* passing_test = test_module->addTest("DependencyTest", [](test::Test& test) { });
     test::Test* dependent_test = test_module->addTest("DependentTest", { passing_test }, [](test::Test& test) { } );
-    test_module->print_summary_enabled = true;
     test_module->run();
+    test_module->printSummary();
     assert(passing_test->is_run);
     assert(passing_test->result);
     assert(dependent_test->is_run);
@@ -64,8 +64,8 @@ void test_dependency_cancellation() {
         test_module->failingTest(test);
     });
     test::Test* dependent_test = test_module->addTest("DependentTest", { failing_test }, [](test::Test& test) { });
-    test_module->print_summary_enabled = true;
     test_module->run();
+    test_module->printSummary();
     assert(failing_test->is_run);
     assert(!failing_test->result);
     assert(!dependent_test->is_run);
@@ -79,8 +79,8 @@ void test_module_dependency_execution() {
     test::Test* dependency_test = dependency_module->addTest("DependencyTest", [](test::Test& test) { });
     TestModule* dependent_module = root_module->addModule<TestModule>("DependentModule", {dependency_module});
     test::Test* dependent_test = dependent_module->addTest("DependentTest", [](test::Test& test) { });
-    root_module->print_summary_enabled = true;
     root_module->run();
+    root_module->printSummary();
     assert(dependency_test->is_run);
     assert(dependency_test->result);
     assert(dependent_test->is_run);
@@ -95,8 +95,8 @@ void test_module_dependency_cancellation() {
     });
     TestModule* dependent_module = root_module->addModule<TestModule>("DependentModule", { failing_module });
     test::Test* dependent_test = dependent_module->addTest("DependentTest", [](test::Test& test) { });
-    root_module->print_summary_enabled = true;
     root_module->run();
+    root_module->printSummary();
     assert(failing_test->is_run);
     assert(!failing_test->result);
     assert(!dependent_test->is_run);
@@ -108,12 +108,17 @@ int main() {
     basic_test();
     add_test();
     run_test();
+    std::cout << std::endl;
     failing_test();
+    std::cout << std::endl;
     test_dependency_execution();
+    std::cout << std::endl;
     test_dependency_cancellation();
+    std::cout << std::endl;
     test_module_dependency_execution();
+    std::cout << std::endl;
     test_module_dependency_cancellation();
-
+    std::cout << std::endl;
     std::cout << "ALL PASSED" << std::endl;
     return 0;
 }
