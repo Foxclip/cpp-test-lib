@@ -165,7 +165,7 @@ namespace test {
 
 	template<typename T>
 	requires std::derived_from<T, TestModule>
-	inline T* TestModule::addModule(const std::string& name, const std::vector<TestNode*>& required) {
+	T* TestModule::addModule(const std::string& name, const std::vector<TestNode*>& required) {
 		std::unique_ptr<T> uptr = std::make_unique<T>(name, this, required);
 		T* ptr = uptr.get();
 		children.push_back(std::move(uptr));
@@ -173,7 +173,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2>
-	inline bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected) {
+	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected) {
 		if constexpr (std::convertible_to<T1, std::string> || std::same_as<T1, const char*>) {
 			auto func = [](const T1& val) { return val; };
 			return testCompare(test, file, line, name, actual, expected, func);
@@ -184,7 +184,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2, typename TStr>
-	inline bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
+	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
 		if (actual != expected) {
 			compareFail(test, file, line, name, actual, expected, to_str);
 			return false;
@@ -193,7 +193,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2, typename TStr, typename TCmp>
-	inline bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp) {
+	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp) {
 		if (!cmp(actual, expected)) {
 			compareFail(test, file, line, name, actual, expected, to_str);
 			return false;
@@ -202,7 +202,7 @@ namespace test {
 	}
 
 	template<typename T>
-	inline bool TestModule::testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon) {
+	bool TestModule::testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon) {
 		if (!equals(actual, expected, epsilon)) {
 			auto func = [](const T& val) { return std::to_string(val); };
 			compareFail(test, file, line, name, actual, expected, func);
@@ -212,7 +212,7 @@ namespace test {
 	}
 
 	template<typename T>
-	inline bool TestModule::testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected) {
+	bool TestModule::testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected) {
 		if (actual.x != expected.x || actual.y != expected.y) {
 			auto to_str = [](const T& vec) {
 				return "(" + std::to_string(vec.x) + " " + std::to_string(vec.y) + ")";
@@ -224,7 +224,7 @@ namespace test {
 	}
 
 	template<typename T>
-	inline bool TestModule::testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon) {
+	bool TestModule::testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon) {
 		if (!equals(actual.x, expected.x, epsilon) || !equals(actual.y, expected.y, epsilon)) {
 			auto to_str = [](const T& vec) {
 				return "(" + std::to_string(vec.x) + " " + std::to_string(vec.y) + ")";
@@ -236,12 +236,12 @@ namespace test {
 	}
 
 	template<typename T, typename TEps>
-	inline bool TestModule::equals(T left, T right, TEps epsilon) {
+	bool TestModule::equals(T left, T right, TEps epsilon) {
 		return abs(left - right) < epsilon;
 	}
 
 	template<typename T1, typename T2, typename TStr>
-	inline void TestModule::compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
+	void TestModule::compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
 		std::string filename = std::filesystem::path(file).filename().string();
 		std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";
 		TestError* error = test.getCurrentError()->add(name + " " + location_str);

@@ -120,5 +120,9 @@ int main() {
     test_module_dependency_cancellation();
     std::cout << std::endl;
     std::cout << "ALL PASSED" << std::endl;
+
+    // TODO: add T_FAIL macro that outputs message and returns
+    // TODO: rename T_WRAP_CONTAINER to T_CALL
+
     return 0;
 }
