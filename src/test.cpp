@@ -330,13 +330,13 @@ namespace test {
 
 	void TestModule::afterRunModule() { }
 
-	void TestModule::testMessage(Test& test, const std::string& file, size_t line, const std::string& message) {
+	void testMessage(Test& test, const std::string& file, size_t line, const std::string& message) {
 		std::string filename = std::filesystem::path(file).filename().string();
 		std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";
 		test.getCurrentError()->add(message + " " + location_str);
 	}
 
-	bool TestModule::testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message) {
+	bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message) {
 		if (!value) {
 			std::string filename = std::filesystem::path(file).filename().string();
 			std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";
@@ -346,7 +346,7 @@ namespace test {
 		return value;
 	}
 
-	bool TestModule::testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message, const std::string message) {
+	bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message, const std::string message) {
 		if (!value) {
 			std::string filename = std::filesystem::path(file).filename().string();
 			std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";

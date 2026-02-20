@@ -9,26 +9,28 @@
 
 namespace test {
 
-	class Test;
-	using TestFuncType = std::function<void(Test& test)>;
+class Test;
+using TestFuncType = std::function<void(Test& test)>;
+
+// prefixes in macros needed to allow calling from free functions
 
 #define T_MESSAGE(message) \
-	testMessage(test, __FILE__, __LINE__, message)
+	test::testMessage(test, __FILE__, __LINE__, message)
 
 #define T_CHECK(value, ...) \
-	testCheck(test, __FILE__, __LINE__, value, #value, __VA_ARGS__)
+	test::testCheck(test, __FILE__, __LINE__, value, #value, __VA_ARGS__)
 
 #define T_COMPARE(actual, expected, ...) \
-	testCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
+	test::testCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
 
 #define T_APPROX_COMPARE(actual, expected, ...) \
-	testApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
+	test::testApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
 
 #define T_VEC2_COMPARE(actual, expected, ...) \
-	testVec2Compare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
+	test::testVec2Compare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
 
 #define T_VEC2_APPROX_COMPARE(actual, expected, ...) \
-	testVec2ApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
+	test::testVec2ApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
 
 #define T_ASSERT(expr) \
 	if (!expr) { \
@@ -50,6 +52,25 @@ namespace test {
 	}
 
 	class TestModule;
+
+	// Free function declarations for test macros
+	void testMessage(Test& test, const std::string& file, size_t line, const std::string& message);
+	bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message);
+	bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message, const std::string message);
+	template<typename T1, typename T2>
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected);
+	template<typename T1, typename T2, typename TStr>
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str);
+	template<typename T1, typename T2, typename TStr, typename TCmp>
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp);
+	template<typename T>
+	bool testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon = 0.0001f);
+	template<typename T>
+	bool testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected);
+	template<typename T>
+	bool testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon = 0.0001);
+	template<typename T, typename TEps>
+	bool equals(T left, T right, TEps epsilon = 0.0001f);
 
 	class TestNode {
 	public:
@@ -139,27 +160,26 @@ namespace test {
 
 		virtual void beforeRunModule();
 		virtual void afterRunModule();
-		static void testMessage(Test& test, const std::string& file, size_t line, const std::string& message);
-		static bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message);
-		static bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message, const std::string message);
-		template<typename T1, typename T2>
-		static bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected);
-		template<typename T1, typename T2, typename TStr>
-		static bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str);
-		template<typename T1, typename T2, typename TStr, typename TCmp>
-		static bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp);
-		template<typename T>
-		static bool testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon = 0.0001f);
-		template<typename T>
-		static bool testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected);
-		template<typename T>
-		static bool testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon = 0.0001);
-		template<typename T, typename TEps>
-		static bool equals(T left, T right, TEps epsilon = 0.0001f);
 
 	private:
+		// Deleted - converted to free functions
+		friend void testMessage(Test& test, const std::string& file, size_t line, const std::string& message);
+		friend bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message);
+		friend bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message, const std::string message);
 		template<typename T1, typename T2, typename TStr>
-		static void compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str);
+		friend bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str);
+		template<typename T1, typename T2, typename TStr, typename TCmp>
+		friend bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp);
+		template<typename T>
+		friend bool testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon);
+		template<typename T>
+		friend bool testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected);
+		template<typename T>
+		friend bool testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon);
+		template<typename T, typename TEps>
+		friend bool equals(T left, T right, TEps epsilon);
+		template<typename T1, typename T2, typename TStr>
+		friend void compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str);
 
 	};
 
@@ -173,7 +193,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2>
-	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected) {
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected) {
 		if constexpr (std::convertible_to<T1, std::string> || std::same_as<T1, const char*>) {
 			auto func = [](const T1& val) { return val; };
 			return testCompare(test, file, line, name, actual, expected, func);
@@ -184,7 +204,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2, typename TStr>
-	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
 		if (actual != expected) {
 			compareFail(test, file, line, name, actual, expected, to_str);
 			return false;
@@ -193,7 +213,7 @@ namespace test {
 	}
 
 	template<typename T1, typename T2, typename TStr, typename TCmp>
-	bool TestModule::testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp) {
+	bool testCompare(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str, TCmp cmp) {
 		if (!cmp(actual, expected)) {
 			compareFail(test, file, line, name, actual, expected, to_str);
 			return false;
@@ -202,7 +222,7 @@ namespace test {
 	}
 
 	template<typename T>
-	bool TestModule::testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon) {
+	bool testApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, T epsilon) {
 		if (!equals(actual, expected, epsilon)) {
 			auto func = [](const T& val) { return std::to_string(val); };
 			compareFail(test, file, line, name, actual, expected, func);
@@ -212,7 +232,7 @@ namespace test {
 	}
 
 	template<typename T>
-	bool TestModule::testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected) {
+	bool testVec2Compare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected) {
 		if (actual.x != expected.x || actual.y != expected.y) {
 			auto to_str = [](const T& vec) {
 				return "(" + std::to_string(vec.x) + " " + std::to_string(vec.y) + ")";
@@ -224,7 +244,7 @@ namespace test {
 	}
 
 	template<typename T>
-	bool TestModule::testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon) {
+	bool testVec2ApproxCompare(Test& test, const std::string& file, size_t line, const std::string& name, T actual, T expected, double epsilon) {
 		if (!equals(actual.x, expected.x, epsilon) || !equals(actual.y, expected.y, epsilon)) {
 			auto to_str = [](const T& vec) {
 				return "(" + std::to_string(vec.x) + " " + std::to_string(vec.y) + ")";
@@ -236,12 +256,12 @@ namespace test {
 	}
 
 	template<typename T, typename TEps>
-	bool TestModule::equals(T left, T right, TEps epsilon) {
+	bool equals(T left, T right, TEps epsilon) {
 		return abs(left - right) < epsilon;
 	}
 
 	template<typename T1, typename T2, typename TStr>
-	void TestModule::compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
+	void compareFail(Test& test, const std::string& file, size_t line, const std::string& name, T1 actual, T2 expected, TStr to_str) {
 		std::string filename = std::filesystem::path(file).filename().string();
 		std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";
 		TestError* error = test.getCurrentError()->add(name + " " + location_str);
