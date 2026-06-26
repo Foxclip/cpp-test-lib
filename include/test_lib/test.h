@@ -35,12 +35,12 @@ using TestFuncType = std::function<void(Test& test)>;
 #define T_COMPARE_RAW(actual, expected, ...) \
 	test.raw_mode = true; \
 	test::testCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
-	test.raw_mode = false
+	test.raw_mode = false;
 
 #define T_APPROX_COMPARE_RAW(actual, expected, ...) \
 	test.raw_mode = true; \
 	test::testApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
-	test.raw_mode = false
+	test.raw_mode = false;
 
 #define T_VEC2_COMPARE_RAW(actual, expected, ...) \
 	test.raw_mode = true; \

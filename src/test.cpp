@@ -88,6 +88,7 @@ namespace test {
 	TestError* TestError::add(const std::string& message, Type type) {
 		std::unique_ptr<TestError> uptr = std::make_unique<TestError>(message, type);
 		TestError* ptr = uptr.get();
+        ptr->raw = raw;
 		subentries.push_back(std::move(uptr));
 		return ptr;
 	}
