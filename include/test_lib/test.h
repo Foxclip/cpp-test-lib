@@ -32,6 +32,26 @@ using TestFuncType = std::function<void(Test& test)>;
 #define T_VEC2_APPROX_COMPARE(actual, expected, ...) \
 	test::testVec2ApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__)
 
+#define T_COMPARE_RAW(actual, expected, ...) \
+	test.raw_mode = true; \
+	test::testCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
+	test.raw_mode = false
+
+#define T_APPROX_COMPARE_RAW(actual, expected, ...) \
+	test.raw_mode = true; \
+	test::testApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
+	test.raw_mode = false
+
+#define T_VEC2_COMPARE_RAW(actual, expected, ...) \
+	test.raw_mode = true; \
+	test::testVec2Compare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
+	test.raw_mode = false;
+
+#define T_VEC2_APPROX_COMPARE_RAW(actual, expected, ...) \
+	test.raw_mode = true; \
+	test::testVec2ApproxCompare(test, __FILE__, __LINE__, #actual, actual, expected, __VA_ARGS__); \
+	test.raw_mode = false;
+
 #define T_ASSERT(expr) \
 	if (!expr) { \
 		return; \
@@ -93,6 +113,7 @@ struct TestError {
 	};
 	Type type;
 	std::string str;
+	bool raw;
 	std::vector<std::unique_ptr<TestError>> subentries;
 	explicit TestError(const std::string& str, Type type);
 	TestError* add(const std::string& message, Type type = Type::Normal);
@@ -102,6 +123,7 @@ struct TestError {
 class Test : public TestNode {
 public:
 	std::unique_ptr<TestError> root_error;
+	bool raw_mode;
 
 	Test(std::string name, TestFuncType func);
 	Test(std::string name, std::vector<TestNode*> required, TestFuncType func);
@@ -265,6 +287,7 @@ void compareFail(Test& test, const std::string& file, size_t line, const std::st
 	std::string filename = std::filesystem::path(file).filename().string();
 	std::string location_str = "[" + filename + ":" + std::to_string(line) + "]";
 	TestError* error = test.getCurrentError()->add(name + " " + location_str);
+	error->raw = test.raw_mode;
 	error->add("Expected value: " + to_str(expected));
 	error->add("Actual value:   " + to_str(actual));
 	test.result = false;

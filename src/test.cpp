@@ -12,6 +12,7 @@ namespace test {
 	Test::Test(std::string name, TestFuncType func) {
 		this->name = name;
 		this->func = func;
+		this->raw_mode = false;
 		root_error = std::make_unique<TestError>("root", TestError::Type::Root);
 		error_stack.push(root_error.get());
 	}
@@ -81,6 +82,7 @@ namespace test {
 	TestError::TestError(const std::string& str, Type type) {
 		this->str = str;
 		this->type = type;
+		this->raw = false;
 	}
 
 	TestError* TestError::add(const std::string& message, Type type) {
@@ -109,8 +111,12 @@ namespace test {
 			}
 		}
 		if (type != Type::Root) {
-			std::string esc_str = Test::char_to_esc(str, false);
-			logger << esc_str << "\n";
+			if (raw) {
+				logger << str << "\n";
+			} else {
+				std::string esc_str = Test::char_to_esc(str, false);
+				logger << esc_str << "\n";
+			}
 		}
 		if (subentries.size() > 0) {
 			LoggerIndent subentries_indent(type != Type::Root);
