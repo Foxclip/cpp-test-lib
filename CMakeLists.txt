@@ -14,6 +14,7 @@ else()
     # use externally provided logger
     get_target_property(LOGGER_INCLUDE_DIRS logger INCLUDE_DIRECTORIES)
     target_include_directories(test_lib PRIVATE ${LOGGER_INCLUDE_DIRS})
+    target_link_libraries(test_lib PRIVATE logger)
 endif()
 
 add_subdirectory(test_lib_tests)
