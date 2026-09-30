@@ -22,7 +22,17 @@ void run_tests() {
     passing_module.printSummary();
 }
 
+void run_single_test() {
+    // Runs only the test at the given path, along with the tests it depends on
+    test::TestModule root_module("Single test example", nullptr);
+    ExampleTestModule1* module_1 = root_module.addModule<ExampleTestModule1>("ExampleModule1");
+    root_module.run("ExampleModule1/List1/third");
+    root_module.printSummary();
+}
+
 int main() {
     run_tests();
+    std::cout << std::endl;
+    run_single_test();
     return 0;
 }

@@ -104,6 +104,82 @@ void test_module_dependency_cancellation() {
     assert(dependent_test->cancelled);
 }
 
+void test_run_single_test() {
+    TestModule* root_module = new TestModule("SingleTestModule", nullptr);
+    TestModule* module_a = root_module->addModule<TestModule>("ModuleA");
+    TestModule* module_b = module_a->addModule<TestModule>("ModuleB");
+    test::Test* test_a = module_a->addTest("TestA", [](test::Test& test) { });
+    test::Test* test_b = module_b->addTest("TestB", [](test::Test& test) { });
+    test::Test* test_c = module_b->addTest("TestC", [](test::Test& test) { });
+    bool result = root_module->run("ModuleA/ModuleB/TestB");
+    root_module->printSummary();
+    assert(result);
+    assert(!test_a->is_run);
+    assert(test_b->is_run);
+    assert(test_b->result);
+    assert(!test_c->is_run);
+}
+
+void test_run_single_test_with_dependencies() {
+    TestModule* root_module = new TestModule("SingleTestDependencyModule", nullptr);
+    TestModule* module = root_module->addModule<TestModule>("Module");
+    test::Test* first_test = module->addTest("FirstTest", [](test::Test& test) { });
+    test::Test* second_test = module->addTest("SecondTest", { first_test }, [](test::Test& test) { });
+    test::Test* third_test = module->addTest("ThirdTest", { second_test }, [](test::Test& test) { });
+    bool result = root_module->run("Module/ThirdTest");
+    root_module->printSummary();
+    assert(result);
+    assert(first_test->is_run);
+    assert(first_test->result);
+    assert(second_test->is_run);
+    assert(second_test->result);
+    assert(third_test->is_run);
+    assert(third_test->result);
+}
+
+void test_run_single_test_with_module_dependency() {
+    TestModule* root_module = new TestModule("SingleTestModuleDependencyModule", nullptr);
+    TestModule* dependency_module = root_module->addModule<TestModule>("DependencyModule");
+    test::Test* dependency_test = dependency_module->addTest("DependencyTest", [](test::Test& test) { });
+    TestModule* target_module = root_module->addModule<TestModule>("TargetModule", { dependency_module });
+    test::Test* target_test = target_module->addTest("TargetTest", [](test::Test& test) { });
+    test::Test* unrelated_test = root_module->addTest("UnrelatedTest", [](test::Test& test) { });
+    bool result = root_module->run("TargetModule/TargetTest");
+    root_module->printSummary();
+    assert(result);
+    assert(dependency_test->is_run);
+    assert(dependency_test->result);
+    assert(target_test->is_run);
+    assert(target_test->result);
+    assert(!unrelated_test->is_run);
+}
+
+void test_run_single_test_failing_dependency() {
+    TestModule* test_module = new TestModule("SingleTestFailingDependencyModule", nullptr);
+    TestModule* module = test_module->addModule<TestModule>("Module");
+    test::Test* failing_test = module->addTest("FailingDependencyTest", [&](test::Test& test) {
+        test_module->failingTest(test);
+    });
+    test::Test* target_test = module->addTest("TargetTest", { failing_test }, [](test::Test& test) { });
+    bool result = test_module->run("Module/TargetTest");
+    test_module->printSummary();
+    assert(!result);
+    assert(failing_test->is_run);
+    assert(!failing_test->result);
+    assert(!target_test->is_run);
+    assert(!target_test->result);
+    assert(target_test->cancelled);
+}
+
+void test_run_single_test_not_found() {
+    TestModule* root_module = new TestModule("SingleTestNotFoundModule", nullptr);
+    TestModule* module = root_module->addModule<TestModule>("Module");
+    test::Test* test = module->addTest("Test", [](test::Test& test) { });
+    bool result = root_module->run("Module/NonexistentTest");
+    assert(!result);
+    assert(!test->is_run);
+}
+
 int main() {
     basic_test();
     add_test();
@@ -118,6 +194,16 @@ int main() {
     test_module_dependency_execution();
     std::cout << std::endl;
     test_module_dependency_cancellation();
+    std::cout << std::endl;
+    test_run_single_test();
+    std::cout << std::endl;
+    test_run_single_test_with_dependencies();
+    std::cout << std::endl;
+    test_run_single_test_with_module_dependency();
+    std::cout << std::endl;
+    test_run_single_test_failing_dependency();
+    std::cout << std::endl;
+    test_run_single_test_not_found();
     std::cout << std::endl;
     std::cout << "ALL PASSED" << std::endl;
 

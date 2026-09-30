@@ -156,6 +156,7 @@ namespace test {
 	Test* TestModule::addTest(const std::string& name, const std::vector<TestNode*>& required, TestFuncType func) {
 		std::unique_ptr<Test> uptr = std::make_unique<Test>(name, required, func);
 		Test* ptr = uptr.get();
+		ptr->parent = this;
 		children.push_back(std::move(uptr));
 		return ptr;
 	}
@@ -220,10 +221,71 @@ namespace test {
 		return result;
 	}
 
+	static std::vector<std::string> splitPath(const std::string& path, char delimiter) {
+		std::vector<std::string> segments;
+		size_t start = 0;
+		while (true) {
+			size_t pos = path.find(delimiter, start);
+			if (pos == std::string::npos) {
+				segments.push_back(path.substr(start));
+				break;
+			}
+			segments.push_back(path.substr(start, pos - start));
+			start = pos + 1;
+		}
+		return segments;
+	}
+
 	bool TestModule::run() {
+		return runFiltered(nullptr);
+	}
+
+	bool TestModule::run(const std::string& test_path) {
+		TestModule* root_module = getRoot();
+		std::vector<std::string> segments = splitPath(test_path, '/');
+		const TestNode* target = root_module->findNodeByPath(segments, 0);
+		if (target == nullptr) {
+			logger << "Test not found: " << test_path << "\n";
+			return false;
+		}
+		std::set<const TestNode*> nodes_to_run;
+		std::vector<const TestNode*> stack;
+		stack.push_back(target);
+		while (!stack.empty()) {
+			const TestNode* node = stack.back();
+			stack.pop_back();
+			if (nodes_to_run.count(node) > 0) {
+				continue;
+			}
+			nodes_to_run.insert(node);
+			for (const TestNode* required_node : node->required_nodes) {
+				stack.push_back(required_node);
+			}
+			const TestModule* module = dynamic_cast<const TestModule*>(node);
+			if (module != nullptr) {
+				std::vector<Test*> module_tests = module->getAllTests();
+				for (Test* test : module_tests) {
+					stack.push_back(test);
+				}
+			}
+			TestModule* ancestor = node->parent;
+			while (ancestor != nullptr && !ancestor->isRoot()) {
+				for (const TestNode* required_node : ancestor->required_nodes) {
+					stack.push_back(required_node);
+				}
+				ancestor = ancestor->parent;
+			}
+		}
+		return runFiltered(&nodes_to_run);
+	}
+
+	bool TestModule::runFiltered(const std::set<const TestNode*>* nodes_to_run) {
 		if (isRoot()) {
 			std::vector<Test*> all_tests = getAllTests();
 			for (Test* test : all_tests) {
+				if (nodes_to_run != nullptr && nodes_to_run->count(test) == 0) {
+					continue;
+				}
 				if (test->name.size() > max_test_name) {
 					max_test_name = test->name.size();
 				}
@@ -235,6 +297,9 @@ namespace test {
 		OnBeforeRun();
 		for (auto& node : children) {
 			if (Test* test = dynamic_cast<Test*>(node.get())) {
+				if (nodes_to_run != nullptr && nodes_to_run->count(test) == 0) {
+					continue;
+				}
 				std::string spacing_str;
 				size_t spacing_size = getRoot()->max_test_name - test->name.size();
 				for (size_t i = 0; i < spacing_size; i++) {
@@ -263,6 +328,9 @@ namespace test {
 					}
 				}
 			} else if (TestModule* module = dynamic_cast<TestModule*>(node.get())) {
+				if (nodes_to_run != nullptr && !module->subtreeIntersects(*nodes_to_run)) {
+					continue;
+				}
 				logger << module->name << "\n";
 				LoggerIndent test_list_indent;
 				bool cancelled = false;
@@ -283,7 +351,7 @@ namespace test {
 					}
 					logger << "Cancelled " << tests.size() << " tests\n";
 				} else {
-					module->run();
+					module->runFiltered(nodes_to_run);
 				}
 				for (const std::string& name : module->passed_list) {
 					passed_list.push_back(module->name + "/" + name);
@@ -304,6 +372,48 @@ namespace test {
 		is_run = true;
 		result = cancelled_list.empty() && failed_list.empty();
 		return result;
+	}
+
+	bool TestModule::subtreeIntersects(const std::set<const TestNode*>& nodes_to_run) const {
+		for (size_t i = 0; i < children.size(); i++) {
+			const TestNode* node = children[i].get();
+			if (nodes_to_run.count(node) > 0) {
+				return true;
+			}
+			const TestModule* module = dynamic_cast<const TestModule*>(node);
+			if (module != nullptr) {
+				if (module->subtreeIntersects(nodes_to_run)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	const TestNode* TestModule::findNodeByPath(const std::vector<std::string>& segments, size_t index) const {
+		if (index >= segments.size()) {
+			return nullptr;
+		}
+		for (size_t i = 0; i < children.size(); i++) {
+			const TestNode* node = children[i].get();
+			if (node->name != segments[index]) {
+				continue;
+			}
+			if (index + 1 == segments.size()) {
+				if (dynamic_cast<const Test*>(node) != nullptr) {
+					return node;
+				}
+			} else {
+				const TestModule* sub_module = dynamic_cast<const TestModule*>(node);
+				if (sub_module != nullptr) {
+					const TestNode* found_node = sub_module->findNodeByPath(segments, index + 1);
+					if (found_node != nullptr) {
+						return found_node;
+					}
+				}
+			}
+		}
+		return nullptr;
 	}
 
 	void TestModule::printSummary() {

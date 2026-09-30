@@ -6,6 +6,7 @@
 #include <memory>
 #include <filesystem>
 #include <stack>
+#include <set>
 
 namespace test {
 
@@ -176,6 +177,9 @@ public:
 	std::vector<TestModule*> getChildModules() const;
 	std::vector<Test*> getAllTests() const;
 	bool run() override;
+	// Runs only the test at the given path relative to the root module,
+	// e.g. "ModuleA/ModuleB/test", along with the tests it depends on
+	bool run(const std::string& test_path);
 	void printSummary();
 
 protected:
@@ -184,6 +188,11 @@ protected:
 	virtual void afterRunModule();
 
 private:
+	// nullptr runs all tests, otherwise only the tests in the set
+	bool runFiltered(const std::set<const TestNode*>* nodes_to_run);
+	bool subtreeIntersects(const std::set<const TestNode*>& nodes_to_run) const;
+	const TestNode* findNodeByPath(const std::vector<std::string>& segments, size_t index) const;
+
 	// Deleted - converted to free functions
 	friend void testMessage(Test& test, const std::string& file, size_t line, const std::string& message);
 	friend bool testCheck(Test& test, const std::string& file, size_t line, bool value, const std::string& value_message);
