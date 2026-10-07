@@ -306,6 +306,11 @@ namespace test {
 					spacing_str += "-";
 				}
 				logger << test->name << spacing_str << "|" << LoggerFlush();
+				// force the name through the C-stdio buffer to the OS before running the test:
+				// on a hard crash (AV) the C runtime's partial buffer is never flushed, so without
+				// this the last visible console line would be an arbitrary earlier buffer boundary,
+				// not the crashing test
+				std::cout.flush();
 				Logger::disableStdWrite();
 				logger.manualDeactivate();
 				OnBeforeRunTest();
